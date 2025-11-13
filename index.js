@@ -5,11 +5,23 @@ const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
 
-// CORS (puedes ajustar dominios luego)
-app.use(cors());
+/**
+ * CORS: permitir peticiones desde el front (local y Netlify)
+ * Para desarrollo usamos origin: '*' para no pelearnos.
+ * Si luego quieres limitarlo, se ajusta fácil.
+ */
+app.use(cors({
+  origin: '*', // <-- DEV: permite cualquier origen
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+
+// Manejo explícito de preflight
+app.options('*', cors());
+
 app.use(express.json());
 
-// Cliente de Supabase (modo backend)
+// Cliente Supabase (modo backend)
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_ANON_KEY
@@ -54,7 +66,6 @@ app.post('/login', async (req, res) => {
       return res.status(401).json({ error: error.message });
     }
 
-    // Devolvemos el access_token y el usuario
     return res.json({
       token: data.session.access_token,
       user: data.user,
